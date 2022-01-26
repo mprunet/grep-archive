@@ -1,5 +1,5 @@
 # grep-archive
-Grep archive search in any files on the filesystem, in archive and even inner archive.
+Grep archive search for string in any files on the filesystem, in archive and even inner archive.
 
 Supported archive format are : 
 - Tar Formats

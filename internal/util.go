@@ -39,6 +39,6 @@ func CascadeError(err error, str string, a ...interface{}) error {
 func closeReader(z VirtualFile, reader io.ReadCloser) {
 	err := reader.Close()
 	if err != nil {
-		PrintErrorMessageCascade(err, "Impossible to close reader %v", z.FullPath())
+		PrintErrorMessageCascade(err, "[1017] Impossible to close reader %v", z.FullPath())
 	}
 }

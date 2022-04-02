@@ -8,9 +8,23 @@ import (
 	"strings"
 )
 
+type arrayFlags []string
+
+func (i *arrayFlags) String() string {
+	return "my string representation"
+}
+
+func (i *arrayFlags) Set(value string) error {
+	*i = append(*i, value)
+	return nil
+}
+
+var ExcludeFile arrayFlags
 var FileInMemory int64 = 10000000
 var Verbose = false
-var PrintMatchingFileName = false
+var DontOutputLineFound = false
+var DontPrintMatchingFileName = false
+var PrintNonMatchingFileName = false
 var Root = ""
 var nbFile = 0
 var nbFileInArchive = 0
@@ -32,6 +46,9 @@ func IsArchive(file VirtualFile) bool {
 }
 
 func analyse(file VirtualFile) {
+	if isExcluded(file) {
+		return
+	}
 	filename := file.FileName()
 	checkFile(file)
 	if file.IsRegularFile() && (strings.HasSuffix(filename, ".zip") ||
@@ -80,50 +97,22 @@ func DoIt() {
 	PrintInfo("%v scanned file, %v scanned in archive, %v files match file pattern, %v line match line pattern", nbFile, nbFileInArchive, nbFileMatch, nbLineMatch)
 }
 
-func globCheck(filename string) bool {
-	ret, _ := filepath.Match(*FileNameGlob, filename)
+func GlobCheck(glob string, filename string) bool {
+	if !strings.Contains(glob, "/") {
+		idx := strings.LastIndex(filename, "/")
+		if idx != -1 {
+			filename = filename[idx+1:]
+		}
+	}
+	ret, _ := filepath.Match(glob, filename)
 	return ret
 }
 
 func checkFile(file VirtualFile) {
 	if (FileNameRegexpFilter == nil && FileNameGlob == nil) ||
 		(FileNameRegexpFilter != nil && FileNameRegexpFilter.MatchString(file.FileName())) ||
-		(FileNameGlob != nil && globCheck(file.FileName())) {
-		if Grep == nil {
-			PrintOut("File %v Found", file.FullPath())
-			nbFileMatch++
-		} else {
-			if !IsArchive(file) {
-				reader, err := file.Open()
-				if err != nil {
-					PrintErrorMessageCascade(err, "Impossible to open file %v", file.FullPath())
-				} else {
-					var found = false
-					defer closeReader(file, reader)
-					scanner := bufio.NewScanner(reader)
-					for scanner.Scan() {
-						text := scanner.Text()
-						if Grep.MatchString(text) {
-							if !found {
-								PrintOut("MATCH FOUND IN %v", file.FullPath())
-								found = true
-								nbFileMatch++
-							}
-							PrintOut("    %v", text)
-							nbLineMatch++
-						}
-					}
-					if (PrintMatchingFileName || Verbose) && !found {
-						PrintOut("MATCH NOT FOUND IN %v", file.FullPath())
-						found = true
-					}
-				}
-			} else {
-				if Verbose {
-					PrintVerbose("Grep of file %v skipped, will expanded before grep", file.FullPath())
-				}
-			}
-		}
+		(FileNameGlob != nil && GlobCheck(*FileNameGlob, file.FileName())) {
+		checkFileImpl(file)
 	} else if Verbose {
 		PrintVerbose("File %v does not match file pattern", file.FullPath())
 	}
@@ -133,4 +122,58 @@ func checkFile(file VirtualFile) {
 		nbFile++
 	}
 
+}
+
+func checkFileImpl(file VirtualFile) {
+	if Grep == nil {
+		PrintOut("File %v Found", file.FullPath())
+		nbFileMatch++
+	} else {
+		if !IsArchive(file) {
+			reader, err := file.Open()
+			if err != nil {
+				PrintErrorMessageCascade(err, "[1016] Impossible to open file %v", file.FullPath())
+			} else {
+				var found = false
+				defer closeReader(file, reader)
+				scanner := bufio.NewScanner(reader)
+				for scanner.Scan() {
+					text := scanner.Text()
+					if Grep.MatchString(text) {
+						if !found {
+							if !DontPrintMatchingFileName || Verbose {
+								PrintOut("MATCH FOUND IN %v", file.FullPath())
+							}
+							found = true
+							nbFileMatch++
+						}
+						if !DontOutputLineFound || Verbose {
+							PrintOut("    %v", text)
+						}
+						nbLineMatch++
+					}
+				}
+				if (PrintNonMatchingFileName || Verbose) && !found {
+					PrintOut("MATCH NOT FOUND IN %v", file.FullPath())
+					found = true
+				}
+			}
+		} else {
+			if Verbose {
+				PrintVerbose("Grep of file %v skipped, will expanded before grep", file.FullPath())
+			}
+		}
+	}
+}
+
+func isExcluded(file VirtualFile) bool {
+	for _, s := range ExcludeFile {
+		if GlobCheck(s, file.FileName()) {
+			if Verbose {
+				PrintVerbose("File %v excluded", file.FullPath())
+			}
+			return true
+		}
+	}
+	return false
 }

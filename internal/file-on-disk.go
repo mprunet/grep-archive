@@ -78,7 +78,7 @@ func (r *RealFile) IsRegularFile() bool {
 func (r *RealFile) CloseTemp() {
 	err := r.file.Close()
 	if err != nil {
-		PrintErrorMessageCascade(err, "Impossible to close reader %v", r.FullPath())
+		PrintErrorMessageCascade(err, "[1015] Impossible to close reader %v", r.FullPath())
 	}
 	r.file = nil
 	r.info = nil

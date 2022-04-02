@@ -61,11 +61,11 @@ func (t *FileInATar) CloseTemp() { // Ne pas fermer pour les tar
 		var tmpFileName = t.tmpFile.Name()
 		err := t.tmpFile.Close()
 		if err != nil {
-			PrintErrorMessageCascade(err, "Impossible to close temporary file %v mirror of %v", tmpFileName, t.FullPath())
+			PrintErrorMessageCascade(err, "[1010] Impossible to close temporary file %v mirror of %v", tmpFileName, t.FullPath())
 		}
 		err = os.Remove(tmpFileName)
 		if err != nil {
-			PrintErrorMessageCascade(err, "Impossible to remove temporary file %v mirror of %v", tmpFileName, t.FullPath())
+			PrintErrorMessageCascade(err, "[1011] Impossible to remove temporary file %v mirror of %v", tmpFileName, t.FullPath())
 		}
 		t.tmpFile = nil
 	}

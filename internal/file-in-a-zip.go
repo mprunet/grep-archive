@@ -28,11 +28,11 @@ func (z *FileInAZip) CloseTemp() {
 		var tmpFileName = z.tmpFile.Name()
 		err := z.tmpFile.Close()
 		if err != nil {
-			PrintErrorMessageCascade(err, "Impossible to close temporary file %v mirror of %v", tmpFileName, z.FullPath())
+			PrintErrorMessageCascade(err, "[1013] Impossible to close temporary file %v mirror of %v", tmpFileName, z.FullPath())
 		}
 		err = os.Remove(tmpFileName)
 		if err != nil {
-			PrintErrorMessageCascade(err, "Impossible to remove temporary file %v mirror of %v", tmpFileName, z.FullPath())
+			PrintErrorMessageCascade(err, "[1014] Impossible to remove temporary file %v mirror of %v", tmpFileName, z.FullPath())
 		}
 		z.tmpFile = nil
 	}

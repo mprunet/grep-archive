@@ -48,7 +48,7 @@ func NewTarArchive(z VirtualFile) (*TarArchive, error) {
 	ret.closeCallback = func() {
 		err := stream.Close()
 		if err != nil {
-			PrintErrorMessageCascade(err, "Impossible to close reader %v", fullpath)
+			PrintErrorMessageCascade(err, "[1012] Impossible to close reader %v", fullpath)
 		}
 	}
 	ret.fullPath = fullpath

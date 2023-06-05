@@ -2,6 +2,9 @@ package internal
 
 import (
 	"bufio"
+	"compress/bzip2"
+	"compress/gzip"
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -36,28 +39,15 @@ var Grep *regexp.Regexp = nil
 
 func IsArchive(file VirtualFile) bool {
 	filename := file.FileName()
-	return file.IsRegularFile() && (strings.HasSuffix(filename, ".zip") ||
-		strings.HasSuffix(filename, ".war") ||
-		strings.HasSuffix(filename, ".ear") ||
-		strings.HasSuffix(filename, ".jar") ||
-		strings.HasSuffix(filename, ".tgz") ||
-		strings.HasSuffix(filename, ".tar.gz") ||
-		strings.HasSuffix(filename, ".tar"))
+	return file.IsRegularFile() && (isTarArchive(filename) || isZipArchive(filename))
 }
 
 func analyse(file VirtualFile) {
 	if isExcluded(file) {
 		return
 	}
-	filename := file.FileName()
 	checkFile(file)
-	if file.IsRegularFile() && (strings.HasSuffix(filename, ".zip") ||
-		strings.HasSuffix(filename, ".war") ||
-		strings.HasSuffix(filename, ".ear") ||
-		strings.HasSuffix(filename, ".jar") ||
-		strings.HasSuffix(filename, ".tgz") ||
-		strings.HasSuffix(filename, ".tar.gz") ||
-		strings.HasSuffix(filename, ".tar")) {
+	if IsArchive(file) {
 		child, err := toArchive(file)
 		if err != nil {
 			PrintError(err)
@@ -114,7 +104,7 @@ func checkFile(file VirtualFile) {
 		(FileNameGlob != nil && GlobCheck(*FileNameGlob, file.FileName())) {
 		checkFileImpl(file)
 	} else if Verbose {
-		PrintVerbose("File %v does not match file pattern", file.FullPath())
+		PrintVerbose("File %v (%v) does not match file pattern", file.FileName(), file.FullPath())
 	}
 	if file.IsInArchive() {
 		nbFileInArchive++
@@ -135,6 +125,23 @@ func checkFileImpl(file VirtualFile) {
 				PrintErrorMessageCascade(err, "[1016] Impossible to open file %v", file.FullPath())
 			} else {
 				var found = false
+				fullpath := file.FullPath()
+				if strings.HasSuffix(fullpath, ".gz") {
+					var reader2 *gzip.Reader
+					reader2, err = gzip.NewReader(reader)
+					if err == nil {
+						reader = reader2
+					} else if Verbose {
+						PrintVerbose("Impossible to un compress %v, file will be read uncompressed", file.FullPath())
+					}
+				} else if strings.HasSuffix(fullpath, ".bz2") {
+					var reader2 io.Reader
+					reader2 = bzip2.NewReader(reader)
+					reader = CloseableReader{
+						Reader:    reader2,
+						closeable: reader,
+					}
+				}
 				defer closeReader(file, reader)
 				scanner := bufio.NewScanner(reader)
 				for scanner.Scan() {

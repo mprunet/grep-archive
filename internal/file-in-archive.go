@@ -21,16 +21,31 @@ type VirtualFile interface {
 	CloseTemp()
 }
 
-func toArchive(file VirtualFile) (Archive, error) {
-	var filename = file.FileName()
+func isZipArchive(filename string) bool {
 	if strings.HasSuffix(filename, ".zip") ||
+		strings.HasSuffix(filename, ".apk") ||
 		strings.HasSuffix(filename, ".war") ||
 		strings.HasSuffix(filename, ".ear") ||
 		strings.HasSuffix(filename, ".jar") {
-		return NewZipArchive(file)
-	} else if strings.HasSuffix(filename, ".tgz") ||
+		return true
+	}
+	return false
+}
+
+func isTarArchive(filename string) bool {
+	if strings.HasSuffix(filename, ".tgz") ||
 		strings.HasSuffix(filename, ".tar.gz") ||
 		strings.HasSuffix(filename, ".tar") {
+		return true
+	}
+	return false
+}
+
+func toArchive(file VirtualFile) (Archive, error) {
+	var filename = file.FileName()
+	if isZipArchive(filename) {
+		return NewZipArchive(file)
+	} else if isTarArchive(filename) {
 		return NewTarArchive(file)
 	} else {
 		return nil, nil

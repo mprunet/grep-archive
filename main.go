@@ -26,7 +26,7 @@ func main() {
 		flag.Usage()
 		return
 	}
-	if *filePatternRegexp != "" && *internal.FileNameGlob != "" {
+	if *filePatternRegexp != "" && *filePattern != "" {
 		internal.PrintErrorMessage("filter and filter-regexp are exclusive parameters")
 		flag.Usage()
 		return

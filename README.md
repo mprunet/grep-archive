@@ -7,6 +7,7 @@ Supported archive format are :
   - tar 
   - tgz 
   - tar.bz2 
+  - tar.zst
 - Zip Format
   - jar
   - ear 

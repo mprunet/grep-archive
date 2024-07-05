@@ -35,6 +35,7 @@ func isZipArchive(filename string) bool {
 func isTarArchive(filename string) bool {
 	if strings.HasSuffix(filename, ".tgz") ||
 		strings.HasSuffix(filename, ".tar.gz") ||
+		strings.HasSuffix(filename, ".tar.zst") ||
 		strings.HasSuffix(filename, ".tar") {
 		return true
 	}

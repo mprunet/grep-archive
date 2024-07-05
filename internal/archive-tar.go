@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"compress/bzip2"
 	"compress/gzip"
+	"github.com/klauspost/compress/zstd"
 	"io"
 	"strings"
 )
@@ -61,6 +62,12 @@ func NewTarArchive(z VirtualFile) (*TarArchive, error) {
 		}
 	} else if strings.HasSuffix(fullpath, "bz2") {
 		reader = bzip2.NewReader(reader)
+	} else if strings.HasSuffix(fullpath, "zst") {
+		reader, err = zstd.NewReader(reader)
+		if err != nil {
+			ret.Close()
+			return nil, CascadeError(err, "[1007] - Impossible to uncompress zst file %v", fullpath)
+		}
 	}
 	ret.entryReader = tar.NewReader(reader)
 	return ret, nil

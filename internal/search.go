@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"compress/bzip2"
 	"compress/gzip"
+	"github.com/klauspost/compress/zstd"
 	"io"
 	"os"
 	"path/filepath"
@@ -140,6 +141,17 @@ func checkFileImpl(file VirtualFile) {
 					reader = CloseableReader{
 						Reader:    reader2,
 						closeable: reader,
+					}
+				} else if strings.HasSuffix(fullpath, ".zst") {
+					var reader2 io.Reader
+					reader2, err = zstd.NewReader(reader)
+					if err == nil {
+						reader = CloseableReader{
+							Reader:    reader2,
+							closeable: reader,
+						}
+					} else if Verbose {
+						PrintVerbose("Impossible to un compress %v, file will be read uncompressed", file.FullPath())
 					}
 				}
 				defer closeReader(file, reader)

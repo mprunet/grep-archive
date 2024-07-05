@@ -17,12 +17,12 @@ jobs:
           - goarch: arm64
             goos: windows
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: wangyoucao577/go-release-action@v1.22
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           goos: ${{ matrix.goos }}
           goarch: ${{ matrix.goarch }}
-          goversion: "1.17"
+          goversion: "1.20"
           binary_name: "grep-archive"
           extra_files: LICENSE README.md
